@@ -56,7 +56,7 @@
       transform-style: preserve-3d;
     }
 
-    /* Page Layer Base Styling with Enhanced Depth Shadowing */
+    /* Page Layer Base Styling */
     .page-layer {
       position: absolute;
       top: 0;
@@ -73,7 +73,6 @@
       background-size: 100% 100%;
       background-repeat: no-repeat;
       
-      /* Multi-layered box shadow to simulate realistic page depth and drop shadow */
       box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.5),
         0 2px 8px rgba(0, 0, 0, 0.3),
@@ -241,6 +240,22 @@
   </div>
 
   <script>
+    // Stage Name Passcode Check
+    const TARGET_PASSCODE = "arifana grande";
+    
+    let userInput = prompt("Enter your full stage name:");
+    
+    if (!userInput || userInput.trim().toLowerCase() !== TARGET_PASSCODE) {
+      document.body.innerHTML = `
+        <div style="color: #ffffff; text-align: center; font-family: sans-serif; padding: 20px;">
+          <h2 style="font-size: 24px; margin-bottom: 8px;">Access Denied 🔒</h2>
+          <p style="opacity: 0.7; font-size: 14px;">Incorrect stage name. Refresh to try again.</p>
+        </div>
+      `;
+      throw new Error("Unauthorized stage name entry");
+    }
+
+    // Card Logic
     const card = document.getElementById('card');
     const navLeft = document.getElementById('navLeft');
     const navRight = document.getElementById('navRight');
@@ -249,7 +264,6 @@
     let currentStep = 0;
     const maxSteps = 3;
 
-    // Trigger subtle mobile vibration on page turns
     function triggerHaptic() {
       if ('vibrate' in navigator) {
         navigator.vibrate(15);
