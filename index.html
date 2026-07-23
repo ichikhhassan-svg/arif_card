@@ -26,15 +26,16 @@
       font-family: sans-serif;
       font-size: 14px;
       margin-bottom: 20px;
-      opacity: 0.7;
+      opacity: 0.8;
       letter-spacing: 1px;
+      transition: opacity 0.5s ease;
     }
 
     /* 3D Scene Setup */
     .scene {
       width: 900px;
       height: 600px;
-      perspective: 1800px;
+      perspective: 2000px;
     }
 
     .card {
@@ -44,7 +45,7 @@
       transform-style: preserve-3d;
     }
 
-    /* 1. Inside Background Spread (Stays flat in the back) */
+    /* 1. Inside Background Spread */
     .inside-spread {
       position: absolute;
       top: 0;
@@ -69,6 +70,7 @@
       color: #2b2b2b;
       overflow-y: auto;
       white-space: pre-wrap;
+      z-index: 2;
     }
 
     .page-left {
@@ -79,7 +81,7 @@
       border-left: 1px solid rgba(0, 0, 0, 0.08);
     }
 
-    /* 2. Front Flap (Flips open to the left) */
+    /* 2. Outer Flappable Cover Layer */
     .cover-flap {
       position: absolute;
       top: 0;
@@ -102,15 +104,16 @@
       backface-visibility: hidden;
     }
 
-    /* Open State */
+    /* Open State Adjustments */
     .card.is-open .cover-flap {
       transform: rotateY(-180deg);
+      pointer-events: none; /* Prevents the flipped cover from blocking clicks on the left page */
     }
   </style>
 </head>
 <body>
 
-  <div class="hint" id="hintText">Click the card to open</div>
+  <div class="hint" id="hintText">Click the card cover to open</div>
 
   <div class="scene">
     <div class="card" id="card">
