@@ -52,7 +52,7 @@
       height: 100%;
       border-radius: 8px;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-      padding: 24px;
+      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -66,13 +66,24 @@
       transform-origin: left center;
     }
 
-    /* Handwriting Overlay Image Styling */
+    /* Handwriting Overlay Image Styling - SVG pixel filter + Clip Reveal */
     .handwriting-img {
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Ensures full iPad writing scales without stretching */
+      object-fit: contain;
       pointer-events: none;
-      mix-blend-mode: multiply; /* Blends away the white export background */
+      position: relative;
+      z-index: 5;
+      filter: url(#remove-white);
+      
+      /* Initial clip state: hidden from top to bottom */
+      clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+      transition: clip-path 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* Active write-in state triggers when page opens */
+    .handwriting-img.reveal-text {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
 
     /* 1. Blank Back Page (Deepest layer) */
@@ -157,160 +168,16 @@
 </head>
 <body>
 
-  <div class="hint" id="hintText">Click right side to open</div>
-
-  <div class="scene">
-    <div class="card" id="card">
-
-      <!-- Navigation Hitboxes -->
-      <div class="nav-zone nav-left" id="navLeft"></div>
-      <div class="nav-zone nav-right" id="navRight"></div>
-
-      <!-- Page 3: Blank Back Page -->
-      <div class="page-layer page-blank"></div>
-
-      <!-- Page 2: Right Inside Page with iPad Handwriting -->
-      <div class="page-layer page-right">
-        <img src="handwriting_right.png" alt="Handwritten Page 2" class="handwriting-img">
-      </div>
-
-      <!-- Page 1: Left Inside Page with iPad Handwriting -->
-      <div class="page-layer page-left">
-        <img src="handwriting_left.png" alt="Handwritten Page 1" class="handwriting-img">
-      </div>
-
-      <!-- Cover Layer -->
-      <div class="cover-flap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const card = document.getElementById('card');
-    const navLeft = document.getElementById('navLeft');
-    const navRight = document.getElementById('navRight');
-    const hintText = document.getElementById('hintText');
-
-    let currentStep = 0;
-    const maxSteps = 3;
-
-    function updateCardState() {
-      card.className = 'card';
-      if (currentStep > 0) {
-        card.classList.add(`step-${currentStep}`);
-      }
-
-      if (currentStep === 0) {
-        hintText.innerText = "Click right side to open";
-        hintText.style.opacity = '0.8';
-      } else if (currentStep < maxSteps) {
-        hintText.innerText = "Click right to turn forward • Click left to turn back";
-        hintText.style.opacity = '0.8';
-      } else {
-        hintText.innerText = "Click left side to turn back";
-        hintText.style.opacity = '0.8';
-      }
-    }
-
-    navRight.addEventListener('click', () => {
-      if (currentStep < maxSteps) {
-        currentStep++;
-        updateCardState();
-      }
-    });
-
-    navLeft.addEventListener('click', () => {
-      if (currentStep > 0) {
-        currentStep--;
-        updateCardState();
-      }
-    });
-  </script>
-
-</body>
-</html>    /* 1. Blank Back Page (Deepest layer) */
-    .page-blank {
-      background-image: url('inside_right.png');
-      z-index: 1;
-    }
-
-    /* 2. Right Inside Page */
-    .page-right {
-      background-image: url('inside_right.png');
-      z-index: 2;
-    }
-
-    /* 3. Left Inside Page */
-    .page-left {
-      background-image: url('inside_left.png');
-      z-index: 3;
-    }
-
-    /* 4. Cover Flap (Top layer) */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 4;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Navigation Click Zones */
-    .nav-zone {
-      position: absolute;
-      top: 0;
-      height: 100%;
-      width: 50%;
-      z-index: 100;
-      cursor: pointer;
-    }
-
-    .nav-left { left: 0; }
-    .nav-right { right: 0; }
-
-    /* FLIP STEP STATES */
-    
-    /* Step 1: Open Cover -> Reveal Page 1 */
-    .card.step-1 .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-    }
-
-    /* Step 2: Flip Page 1 -> Reveal Page 2 */
-    .card.step-2 .cover-flap,
-    .card.step-2 .page-left {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-      opacity: 0;
-    }
-
-    /* Step 3: Flip Page 2 -> Reveal Blank Back Page */
-    .card.step-3 .cover-flap,
-    .card.step-3 .page-left,
-    .card.step-3 .page-right {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-      opacity: 0;
-    }
-  </style>
-</head>
-<body>
+  <!-- Hidden SVG filter converting white lightness values to transparent alpha -->
+  <svg style="display: none;">
+    <filter id="remove-white" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="
+        1 0 0 0 0
+        0 1 0 0 0
+        0 0 1 0 0
+        -0.333 -0.333 -0.333 1 0" />
+    </filter>
+  </svg>
 
   <div class="hint" id="hintText">Click right side to open</div>
 
@@ -326,12 +193,12 @@
 
       <!-- Page 2: Right Inside Page with iPad Handwriting -->
       <div class="page-layer page-right">
-        <img src="handwriting_right.png" alt="Handwritten Page 2" class="handwriting-img">
+        <img src="handwriting_right.png" alt="Handwritten Page 2" class="handwriting-img" id="hwRight">
       </div>
 
       <!-- Page 1: Left Inside Page with iPad Handwriting -->
       <div class="page-layer page-left">
-        <img src="handwriting_left.png" alt="Handwritten Page 1" class="handwriting-img">
+        <img src="handwriting_left.png" alt="Handwritten Page 1" class="handwriting-img" id="hwLeft">
       </div>
 
       <!-- Cover Layer -->
@@ -347,175 +214,9 @@
     const navLeft = document.getElementById('navLeft');
     const navRight = document.getElementById('navRight');
     const hintText = document.getElementById('hintText');
-
-    let currentStep = 0;
-    const maxSteps = 3;
-
-    function updateCardState() {
-      card.className = 'card';
-      if (currentStep > 0) {
-        card.classList.add(`step-${currentStep}`);
-      }
-
-      if (currentStep === 0) {
-        hintText.innerText = "Click right side to open";
-        hintText.style.opacity = '0.8';
-      } else if (currentStep < maxSteps) {
-        hintText.innerText = "Click right to turn forward • Click left to turn back";
-        hintText.style.opacity = '0.8';
-      } else {
-        hintText.innerText = "Click left side to turn back";
-        hintText.style.opacity = '0.8';
-      }
-    }
-
-    navRight.addEventListener('click', () => {
-      if (currentStep < maxSteps) {
-        currentStep++;
-        updateCardState();
-      }
-    });
-
-    navLeft.addEventListener('click', () => {
-      if (currentStep > 0) {
-        currentStep--;
-        updateCardState();
-      }
-    });
-  </script>
-
-</body>
-</html>    .page-layer p {
-      margin-bottom: 10px;
-    }
-
-    .page-layer p:last-child {
-      margin-bottom: 0;
-    }
-
-    /* 1. Blank Back Page (Deepest layer) */
-    .page-blank {
-      background-image: url('inside_right.png');
-      z-index: 1;
-    }
-
-    /* 2. Right Inside Page */
-    .page-right {
-      background-image: url('inside_right.png');
-      z-index: 2;
-    }
-
-    /* 3. Left Inside Page */
-    .page-left {
-      background-image: url('inside_left.png');
-      z-index: 3;
-    }
-
-    /* 4. Cover Flap (Top layer) */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 4;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Left / Right Navigation Click Zones */
-    .nav-zone {
-      position: absolute;
-      top: 0;
-      height: 100%;
-      width: 50%;
-      z-index: 100;
-      cursor: pointer;
-    }
-
-    .nav-left { left: 0; }
-    .nav-right { right: 0; }
-
-    /* FLIP STEP STATES */
     
-    /* Step 1: Open Cover -> Reveal Page 1 */
-    .card.step-1 .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-    }
-
-    /* Step 2: Flip Page 1 -> Reveal Page 2 */
-    .card.step-2 .cover-flap,
-    .card.step-2 .page-left {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-      opacity: 0;
-    }
-
-    /* Step 3: Flip Page 2 -> Reveal Blank Back Page */
-    .card.step-3 .cover-flap,
-    .card.step-3 .page-left,
-    .card.step-3 .page-right {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-      opacity: 0;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="hint" id="hintText">Click right side to open</div>
-
-  <div class="scene">
-    <div class="card" id="card">
-
-      <!-- Navigation Hitboxes -->
-      <div class="nav-zone nav-left" id="navLeft"></div>
-      <div class="nav-zone nav-right" id="navRight"></div>
-
-      <!-- Page 3: Blank Back Page -->
-      <div class="page-layer page-blank"></div>
-
-      <!-- Page 2: Right Inside Page -->
-      <div class="page-layer page-right">
-        <p>Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.</p>
-        <p>To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.</p>
-        <p>The second gift is a body spray I use occasionally. Here, I wanted to give a perfume or cologne of sorts, but I did struggle a bit with the scent which you would like. Then I remembered this one which I had, that fits right in that clean aquatic smell. I really hope that you enjoy it and it provokes some great sunny memories within. It is strong and lasts a long time on clothes, the kind I can put on before a BJJ session and still smell fresh afterwards!</p>
-        <p>The last gift is something a bit closer to the heart for me. Last year, you introduced me to the idea of Tazkiyyah, which I hadn't really explored before much (or even heard about a lot). I would eventually end up on a whole series about it by ICPC, which you also introduced me to. Well, the series was based on this book, and I wanted you to have a copy for yourself. I hope that it will be a reference for you when needed, and always shine a light when things get dark like they tend to.</p>
-        <p>So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</p>
-      </div>
-
-      <!-- Page 1: Left Inside Page -->
-      <div class="page-layer page-left">
-        <p>Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...</p>
-        <p>It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.</p>
-        <p>I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</p>
-      </div>
-
-      <!-- Cover Layer -->
-      <div class="cover-flap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const card = document.getElementById('card');
-    const navLeft = document.getElementById('navLeft');
-    const navRight = document.getElementById('navRight');
-    const hintText = document.getElementById('hintText');
+    const hwLeft = document.getElementById('hwLeft');
+    const hwRight = document.getElementById('hwRight');
 
     let currentStep = 0;
     const maxSteps = 3;
@@ -526,6 +227,21 @@
         card.classList.add(`step-${currentStep}`);
       }
 
+      // Handle handwriting reveal timings matching card flip
+      if (currentStep === 1) {
+        // Step 1: Open Cover -> Animate Page 1 text after flap turns slightly
+        setTimeout(() => hwLeft.classList.add('reveal-text'), 400);
+        hwRight.classList.remove('reveal-text');
+      } else if (currentStep === 2) {
+        // Step 2: Open Page 1 -> Animate Page 2 text
+        setTimeout(() => hwRight.classList.add('reveal-text'), 400);
+      } else if (currentStep === 0) {
+        // Reset animations on closing
+        hwLeft.classList.remove('reveal-text');
+        hwRight.classList.remove('reveal-text');
+      }
+
+      // Hint updates
       if (currentStep === 0) {
         hintText.innerText = "Click right side to open";
         hintText.style.opacity = '0.8';
