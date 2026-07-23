@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Happy Birthday Card</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap" rel="stylesheet">
   
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,13 +15,12 @@
       align-items: center;
       min-height: 100vh;
       overflow: hidden;
-      font-family: 'Caveat', cursive;
+      font-family: sans-serif;
       user-select: none;
     }
 
     .hint {
       color: #ffffff;
-      font-family: sans-serif;
       font-size: 14px;
       margin-bottom: 16px;
       opacity: 0.8;
@@ -38,7 +34,6 @@
       width: min(450px, 90vw);
       height: min(600px, 82vh);
       perspective: 2000px;
-      container-type: inline-size;
     }
 
     .card {
@@ -57,13 +52,11 @@
       height: 100%;
       border-radius: 8px;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-      padding: 28px 24px;
-      
-      /* Tightened font sizing to guarantee 100% text visibility */
-      font-size: clamp(11px, 2.95cqw, 14.5px);
-      line-height: 1.22;
-      color: #2b2b2b;
-      overflow: hidden; /* Strict fit constraint */
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
 
       background-size: 100% 100%;
       background-repeat: no-repeat;
@@ -73,8 +66,170 @@
       transform-origin: left center;
     }
 
-    /* Paragraph Spacing for Tight Layouts */
-    .page-layer p {
+    /* Handwriting Overlay Image Styling */
+    .handwriting-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Ensures your full iPad writing scales perfectly without stretching */
+      pointer-events: none;
+    }
+
+    /* 1. Blank Back Page (Deepest layer) */
+    .page-blank {
+      background-image: url('inside_right.png');
+      z-index: 1;
+    }
+
+    /* 2. Right Inside Page */
+    .page-right {
+      background-image: url('inside_right.png');
+      z-index: 2;
+    }
+
+    /* 3. Left Inside Page */
+    .page-left {
+      background-image: url('inside_left.png');
+      z-index: 3;
+    }
+
+    /* 4. Cover Flap (Top layer) */
+    .cover-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: left center;
+      transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 4;
+      cursor: pointer;
+    }
+
+    .cover-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      backface-visibility: hidden;
+    }
+
+    /* Navigation Click Zones */
+    .nav-zone {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .nav-left { left: 0; }
+    .nav-right { right: 0; }
+
+    /* FLIP STEP STATES */
+    
+    /* Step 1: Open Cover -> Reveal Page 1 */
+    .card.step-1 .cover-flap {
+      transform: rotateY(-180deg);
+      pointer-events: none;
+    }
+
+    /* Step 2: Flip Page 1 -> Reveal Page 2 */
+    .card.step-2 .cover-flap,
+    .card.step-2 .page-left {
+      transform: rotateY(-180deg);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    /* Step 3: Flip Page 2 -> Reveal Blank Back Page */
+    .card.step-3 .cover-flap,
+    .card.step-3 .page-left,
+    .card.step-3 .page-right {
+      transform: rotateY(-180deg);
+      pointer-events: none;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hint" id="hintText">Click right side to open</div>
+
+  <div class="scene">
+    <div class="card" id="card">
+
+      <!-- Navigation Hitboxes -->
+      <div class="nav-zone nav-left" id="navLeft"></div>
+      <div class="nav-zone nav-right" id="navRight"></div>
+
+      <!-- Page 3: Blank Back Page -->
+      <div class="page-layer page-blank"></div>
+
+      <!-- Page 2: Right Inside Page with iPad Handwriting -->
+      <div class="page-layer page-right">
+        <img src="handwriting_right.png" alt="Handwritten Page 2" class="handwriting-img">
+      </div>
+
+      <!-- Page 1: Left Inside Page with iPad Handwriting -->
+      <div class="page-layer page-left">
+        <img src="handwriting_left.png" alt="Handwritten Page 1" class="handwriting-img">
+      </div>
+
+      <!-- Cover Layer -->
+      <div class="cover-flap">
+        <img src="cover.png" alt="Cover" class="cover-image">
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const card = document.getElementById('card');
+    const navLeft = document.getElementById('navLeft');
+    const navRight = document.getElementById('navRight');
+    const hintText = document.getElementById('hintText');
+
+    let currentStep = 0;
+    const maxSteps = 3;
+
+    function updateCardState() {
+      card.className = 'card';
+      if (currentStep > 0) {
+        card.classList.add(`step-${currentStep}`);
+      }
+
+      if (currentStep === 0) {
+        hintText.innerText = "Click right side to open";
+        hintText.style.opacity = '0.8';
+      } else if (currentStep < maxSteps) {
+        hintText.innerText = "Click right to turn forward • Click left to turn back";
+        hintText.style.opacity = '0.8';
+      } else {
+        hintText.innerText = "Click left side to turn back";
+        hintText.style.opacity = '0.8';
+      }
+    }
+
+    navRight.addEventListener('click', () => {
+      if (currentStep < maxSteps) {
+        currentStep++;
+        updateCardState();
+      }
+    });
+
+    navLeft.addEventListener('click', () => {
+      if (currentStep > 0) {
+        currentStep--;
+        updateCardState();
+      }
+    });
+  </script>
+
+</body>
+</html>    .page-layer p {
       margin-bottom: 10px;
     }
 
