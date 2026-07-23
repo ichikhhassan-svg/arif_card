@@ -19,6 +19,7 @@
       min-height: 100vh;
       overflow: hidden;
       font-family: 'Caveat', cursive;
+      user-select: none;
     }
 
     .hint {
@@ -31,11 +32,12 @@
       transition: opacity 0.5s ease;
     }
 
-    /* Fixed single-page card size */
+    /* Fixed single-page card aspect ratio */
     .scene {
-      width: 450px;
-      height: 600px;
+      width: min(450px, 90vw);
+      height: min(600px, 80vh);
       perspective: 2000px;
+      container-type: inline-size;
     }
 
     .card {
@@ -54,33 +56,42 @@
       height: 100%;
       border-radius: 8px;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-      overflow-y: auto;
-      padding: 40px 35px;
-      font-size: 20px;
-      line-height: 1.35;
+      padding: 7% 7%;
+      
+      /* Auto-fit typography using container width units */
+      font-size: clamp(13px, 3.8cqw, 18px);
+      line-height: 1.28;
       color: #2b2b2b;
       white-space: pre-wrap;
+      overflow: hidden; /* Strict no-scroll constraint */
+
       background-size: 100% 100%;
       background-repeat: no-repeat;
-      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
       transform-style: preserve-3d;
       backface-visibility: hidden;
+      transform-origin: left center;
     }
 
-    /* 1. Right Inside Page (Deepest layer) */
-    .page-right {
+    /* 1. Blank Back Page (Deepest layer) */
+    .page-blank {
       background-image: url('inside_right.png');
       z-index: 1;
     }
 
-    /* 2. Left Inside Page (Middle layer) */
-    .page-left {
-      background-image: url('inside_left.png');
+    /* 2. Right Inside Page */
+    .page-right {
+      background-image: url('inside_right.png');
       z-index: 2;
-      cursor: pointer;
     }
 
-    /* 3. Cover Flap (Top layer) */
+    /* 3. Left Inside Page */
+    .page-left {
+      background-image: url('inside_left.png');
+      z-index: 3;
+    }
+
+    /* 4. Cover Flap (Top layer) */
     .cover-flap {
       position: absolute;
       top: 0;
@@ -89,8 +100,8 @@
       height: 100%;
       transform-origin: left center;
       transform-style: preserve-3d;
-      transition: transform 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 3;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 4;
       cursor: pointer;
     }
 
@@ -103,16 +114,39 @@
       backface-visibility: hidden;
     }
 
-    /* ANIMATION STATES */
+    /* Left / Right Click Nav Overlays */
+    .nav-zone {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .nav-left { left: 0; }
+    .nav-right { right: 0; }
+
+    /* FLIP STEP STATES */
     
-    /* State 1: Cover flips open to reveal Left Page */
+    /* Step 1: Open Cover -> Reveal Page 1 */
     .card.step-1 .cover-flap {
       transform: rotateY(-180deg);
       pointer-events: none;
     }
 
-    /* State 2: Left Page flips/slides away to reveal Right Page */
+    /* Step 2: Flip Page 1 -> Reveal Page 2 */
+    .card.step-2 .cover-flap,
     .card.step-2 .page-left {
+      transform: rotateY(-180deg);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    /* Step 3: Flip Page 2 -> Reveal Blank Back Page */
+    .card.step-3 .cover-flap,
+    .card.step-3 .page-left,
+    .card.step-3 .page-right {
       transform: rotateY(-180deg);
       pointer-events: none;
       opacity: 0;
@@ -121,12 +155,19 @@
 </head>
 <body>
 
-  <div class="hint" id="hintText">Click the card to open</div>
+  <div class="hint" id="hintText">Click the right side to open</div>
 
   <div class="scene">
     <div class="card" id="card">
 
-      <!-- Step 3 Layer: Right Inside Page -->
+      <!-- Navigation Hitboxes -->
+      <div class="nav-zone nav-left" id="navLeft"></div>
+      <div class="nav-zone nav-right" id="navRight"></div>
+
+      <!-- Page 3: Blank Back Page -->
+      <div class="page-layer page-blank"></div>
+
+      <!-- Page 2: Right Inside Page -->
       <div class="page-layer page-right">Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.
 
 To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.
@@ -137,15 +178,15 @@ The last gift is something a bit closer to the heart for me. Last year, you intr
 
 So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</div>
 
-      <!-- Step 2 Layer: Left Inside Page -->
-      <div class="page-layer page-left" id="pageLeft">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
+      <!-- Page 1: Left Inside Page -->
+      <div class="page-layer page-left">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
 
 It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.
 
 I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</div>
 
-      <!-- Step 1 Layer: Cover Flap -->
-      <div class="cover-flap" id="coverFlap">
+      <!-- Cover Layer -->
+      <div class="cover-flap">
         <img src="cover.png" alt="Cover" class="cover-image">
       </div>
 
@@ -154,417 +195,48 @@ I can easily say for myself, that you are the friend that I had been looking for
 
   <script>
     const card = document.getElementById('card');
-    const coverFlap = document.getElementById('coverFlap');
-    const pageLeft = document.getElementById('pageLeft');
+    const navLeft = document.getElementById('navLeft');
+    const navRight = document.getElementById('navRight');
     const hintText = document.getElementById('hintText');
 
-    let step = 0;
+    let currentStep = 0;
+    const maxSteps = 3;
 
-    // Click 1: Open cover -> Show Left Page
-    coverFlap.addEventListener('click', () => {
-      if (step === 0) {
-        card.classList.add('step-1');
-        hintText.innerText = "Click the page to read the next page";
-        step = 1;
+    function updateCardState() {
+      card.className = 'card';
+      if (currentStep > 0) {
+        card.classList.add(`step-${currentStep}`);
+      }
+
+      // Update instructions hint
+      if (currentStep === 0) {
+        hintText.innerText = "Click right side to open";
+        hintText.style.opacity = '0.8';
+      } else if (currentStep < maxSteps) {
+        hintText.innerText = "Click right to turn forward • Click left to turn back";
+        hintText.style.opacity = '0.8';
+      } else {
+        hintText.innerText = "Click left side to turn back";
+        hintText.style.opacity = '0.8';
+      }
+    }
+
+    // Forward Navigation (Right Side Click)
+    navRight.addEventListener('click', () => {
+      if (currentStep < maxSteps) {
+        currentStep++;
+        updateCardState();
       }
     });
 
-    // Click 2: Open Left Page -> Show Right Page
-    pageLeft.addEventListener('click', () => {
-      if (step === 1) {
-        card.classList.add('step-2');
-        hintText.style.opacity = '0';
-        step = 2;
+    // Backward Navigation (Left Side Click)
+    navLeft.addEventListener('click', () => {
+      if (currentStep > 0) {
+        currentStep--;
+        updateCardState();
       }
-    });
-  </script>
-
-</body>
-</html>      height: 100%;
-      padding: 40px 35px;
-      font-size: 20px;
-      line-height: 1.35;
-      color: #2b2b2b;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
-
-    .page-left {
-      background-image: url('inside_left.png');
-      border-right: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    .page-right {
-      background-image: url('inside_right.png');
-      border-left: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    /* Flappable Front Cover */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 450px;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Open State Flip */
-    .scene.is-open .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="hint" id="hintText">Click the card to open</div>
-
-  <div class="scene" id="scene">
-    <div class="card" id="card">
-      
-      <!-- Inside Pages Spread -->
-      <div class="inside-spread">
-        <div class="page page-left">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
-
-It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.
-
-I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</div>
-        
-        <div class="page page-right">Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.
-
-To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.
-
-The second gift is a body spray I use occasionally. Here, I wanted to give a perfume or cologne of sorts, but I did struggle a bit with the scent which you would like. Then I remembered this one which I had, that fits right in that clean aquatic smell. I really hope that you enjoy it and it provokes some great sunny memories within. It is strong and lasts a long time on clothes, the kind I can put on before a BJJ session and still smell fresh afterwards!
-
-The last gift is something a bit closer to the heart for me. Last year, you introduced me to the idea of Tazkiyyah, which I hadn't really explored before much (or even heard about a lot). I would eventually end up on a whole series about it by ICPC, which you also introduced me to. Well, the series was based on this book, and I wanted you to have a copy for yourself. I hope that it will be a reference for you when needed, and always shine a light when things get dark like they tend to.
-
-So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</div>
-      </div>
-
-      <!-- Flappable Cover -->
-      <div class="cover-flap" id="coverFlap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const scene = document.getElementById('scene');
-    const coverFlap = document.getElementById('coverFlap');
-    const hintText = document.getElementById('hintText');
-
-    coverFlap.addEventListener('click', () => {
-      scene.classList.add('is-open');
-      hintText.style.opacity = '0';
-    });
-  </script>
-
-</body>
-</html>      height: 100%;
-      padding: 45px 40px;
-      font-size: 20px;
-      line-height: 1.4;
-      color: #2c2a29;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      position: relative;
-    }
-
-    /* Left Page Styling */
-    .page-left {
-      background: linear-gradient(to right, #f4efe6 0%, #fcf8f2 10%, #fcf8f2 92%, #e2dcd2 100%);
-      border-right: 1px solid rgba(0, 0, 0, 0.12);
-    }
-
-    /* Right Page Styling */
-    .page-right {
-      background: linear-gradient(to left, #f4efe6 0%, #fcf8f2 10%, #fcf8f2 92%, #e2dcd2 100%);
-      border-left: 1px solid rgba(0, 0, 0, 0.12);
-    }
-
-    /* Decorative Inner Framing */
-    .page::before {
-      content: '';
-      position: absolute;
-      top: 15px;
-      bottom: 15px;
-      left: 15px;
-      right: 15px;
-      border: 1px solid rgba(184, 152, 105, 0.3); /* Subtle gold/bronze border */
-      pointer-events: none;
-      border-radius: 4px;
-    }
-
-    /* Outer Flappable Cover Layer */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 450px;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Open State Flip */
-    .scene.is-open .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="hint" id="hintText">Click the card to open</div>
-
-  <div class="scene" id="scene">
-    <div class="card" id="card">
-      
-      <!-- Inside Pages Spread -->
-      <div class="inside-spread">
-        <div class="page page-left">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
-
-It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.
-
-I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</div>
-        
-        <div class="page page-right">Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.
-
-To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.
-
-The second gift is a body spray I use occasionally. Here, I wanted to give a perfume or cologne of sorts, but I did struggle a bit with the scent which you would like. Then I remembered this one which I had, that fits right in that clean aquatic smell. I really hope that you enjoy it and it provokes some great sunny memories within. It is strong and lasts a long time on clothes, the kind I can put on before a BJJ session and still smell fresh afterwards!
-
-The last gift is something a bit closer to the heart for me. Last year, you introduced me to the idea of Tazkiyyah, which I hadn't really explored before much (or even heard about a lot). I would eventually end up on a whole series about it by ICPC, which you also introduced me to. Well, the series was based on this book, and I wanted you to have a copy for yourself. I hope that it will be a reference for you when needed, and always shine a light when things get dark like they tend to.
-
-So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</div>
-      </div>
-
-      <!-- Flappable Cover -->
-      <div class="cover-flap" id="coverFlap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const scene = document.getElementById('scene');
-    const coverFlap = document.getElementById('coverFlap');
-    const hintText = document.getElementById('hintText');
-
-    coverFlap.addEventListener('click', () => {
-      scene.classList.add('is-open');
-      hintText.style.opacity = '0';
-    });
-  </script>
-
-</body>
-</html>      width: 50%;
-      height: 100%;
-      padding: 40px 35px;
-      font-size: 20px;
-      line-height: 1.35;
-      color: #2b2b2b;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      z-index: 2;
-    }
-
-    .page-left {
-      border-right: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    .page-right {
-      border-left: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    /* 2. Outer Cover Layer */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 450px;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Open State Adjustments */
-    .scene.is-open .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="hint" id="hintText">Click the card to open</div>
-
-  <div class="scene" id="scene">
-    <div class="card" id="card">
-      
-      <!-- Inside Pages Spread -->
-      <div class="inside-spread">
-        <div class="page page-left">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
-
-It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.
-
-I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</div>
-        
-        <div class="page page-right">Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.
-
-To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.
-
-The second gift is a body spray I use occasionally. Here, I wanted to give a perfume or cologne of sorts, but I did struggle a bit with the scent which you would like. Then I remembered this one which I had, that fits right in that clean aquatic smell. I really hope that you enjoy it and it provokes some great sunny memories within. It is strong and lasts a long time on clothes, the kind I can put on before a BJJ session and still smell fresh afterwards!
-
-The last gift is something a bit closer to the heart for me. Last year, you introduced me to the idea of Tazkiyyah, which I hadn't really explored before much (or even heard about a lot). I would eventually end up on a whole series about it by ICPC, which you also introduced me to. Well, the series was based on this book, and I wanted you to have a copy for yourself. I hope that it will be a reference for you when needed, and always shine a light when things get dark like they tend to.
-
-So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</div>
-      </div>
-
-      <!-- Flappable Cover -->
-      <div class="cover-flap" id="coverFlap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const scene = document.getElementById('scene');
-    const coverFlap = document.getElementById('coverFlap');
-    const hintText = document.getElementById('hintText');
-
-    coverFlap.addEventListener('click', () => {
-      scene.classList.add('is-open');
-      hintText.style.opacity = '0';
-    });
-  </script>
-
-</body>
-</html>      border-right: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    .page-right {
-      border-left: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    /* 2. Outer Flappable Cover Layer */
-    .cover-flap {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 50%;
-      height: 100%;
-      transform-origin: left center;
-      transform-style: preserve-3d;
-      transition: transform 1.6s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .cover-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 0 8px 8px 0;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      backface-visibility: hidden;
-    }
-
-    /* Open State Adjustments */
-    .card.is-open .cover-flap {
-      transform: rotateY(-180deg);
-      pointer-events: none; /* Prevents the flipped cover from blocking clicks on the left page */
-    }
-  </style>
-</head>
-<body>
-
-  <div class="hint" id="hintText">Click the card cover to open</div>
-
-  <div class="scene">
-    <div class="card" id="card">
-      
-      <!-- Inside Pages Spread -->
-      <div class="inside-spread">
-        <div class="page page-left">Dear Arif, this is not how this was supposed to reach you at all. I had a card originally made here in Abu Dhabi, hand-written, and shipped over but the USPS choked on it when it was probably just a mile or two from your place. Anyways, this is the next best thing I can do it seems, so I hope it has a similar effect to what I had intended...
-
-It only seems like it was your last birthday last year, and although I wasn't able to be there to celebrate it, just like now, I still remember wanting to be there, perhaps one day we will get the chance to celebrate a birthday together isA. Although I have only known you just over a year, it seems like a lifetime. As we've said to each other multiple times, our connection seems to be one we had been searching for our entire lives.
-
-I can easily say for myself, that you are the friend that I had been looking for, and needing, since a very young age. And I think this sentiment allowed us to really develop a strong friendship so quickly. I cannot thank God enough for what's likely one of, if not the best friendships I have had, and I only ask that it continues for years and years to come. You have shown up in more ways than many I have known, and even continue to do so. You've also pushed me towards the right path, even when it may be difficult, and I have so much gratitude for that. People with such pure hearts aren't easy to come by, so I think it is very important to cherish them and hold them close when we do find them. I think without your presence, I certainly wouldn't be where I am today, especially considering all the positive life changes I have had within the past year, and for that, I will never be grateful enough.</div>
-        
-        <div class="page page-right">Anyways, so let's get on to the presents I have for you. My main thought was to gift things that you would like, and need, but also things that can bridge the thousands of miles. I love gifting experiences, but since that might be hard, I thought that gifts which can allow us to have a similar experience would be best.
-
-To start, there's the Humantra boxes which you already opened. You mentioned liking them a lot, and I thought that they definitely have to be part of what you receive. I chose my personal favorite flavors, and really hope that you enjoy them as well. I would have loved to send some Dubai Chocolate to go along but considering weather and shipping, not the best idea.
-
-The second gift is a body spray I use occasionally. Here, I wanted to give a perfume or cologne of sorts, but I did struggle a bit with the scent which you would like. Then I remembered this one which I had, that fits right in that clean aquatic smell. I really hope that you enjoy it and it provokes some great sunny memories within. It is strong and lasts a long time on clothes, the kind I can put on before a BJJ session and still smell fresh afterwards!
-
-The last gift is something a bit closer to the heart for me. Last year, you introduced me to the idea of Tazkiyyah, which I hadn't really explored before much (or even heard about a lot). I would eventually end up on a whole series about it by ICPC, which you also introduced me to. Well, the series was based on this book, and I wanted you to have a copy for yourself. I hope that it will be a reference for you when needed, and always shine a light when things get dark like they tend to.
-
-So with that, I will end this letter and just hope that you enjoy all these little gifts, which don't really amount to how much I cherish you, my bestie, but may help express the sentiment. I hope that your day, week, month, and year are all filled with blessings, happiness, and love, and that we will cross paths again sooner than we think..</div>
-      </div>
-
-      <!-- Flappable Cover -->
-      <div class="cover-flap" id="coverFlap">
-        <img src="cover.png" alt="Cover" class="cover-image">
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    const card = document.getElementById('card');
-    const coverFlap = document.getElementById('coverFlap');
-    const hintText = document.getElementById('hintText');
-
-    coverFlap.addEventListener('click', () => {
-      card.classList.add('is-open');
-      hintText.style.opacity = '0';
     });
   </script>
 
 </body>
 </html>
-
